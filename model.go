@@ -42,7 +42,8 @@ type ModelImpl struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at"`
 	//
-	Creator uint `json:"creator"`
+	Creator  uint `json:"creator"`
+	Modifier uint `json:"modifier"`
 }
 
 func (m *ModelImpl) ModelName() string {

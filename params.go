@@ -14,6 +14,7 @@ type Params struct {
 	page *Page
 }
 
+// 
 func NewParams(ctx *zoox.Context) *Params {
 	return &Params{
 		ctx: ctx,
