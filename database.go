@@ -136,18 +136,25 @@ func DBFindOne[T any](where map[any]any) (*T, error) {
 	return &f, nil
 }
 
-func DBFindOneAndUpdate[T any](where map[any]any, callback func(*T)) (*T, error) {
-	var f T
-	if err := GetDB().First(&f, where).Error; err != nil {
-		return nil, err
+func DBExists[T any](where map[any]any) (bool, error) {
+	_, err := DBFindOne[T](where)
+	if err != nil {
+		return false, err
 	}
 
-	callback(&f)
+	return true, nil
+}
+
+func DBFindByID[T any](id uint) (*T, error) {
+	var f T
+	if err := GetDB().First(&f, id).Error; err != nil {
+		return nil, err
+	}
 
 	return &f, nil
 }
 
-func DBGetOrCreate[T any](where map[any]any, callback func(*T)) (*T, error) {
+func DBFindOneOrCreate[T any](where map[any]any, callback func(*T)) (*T, error) {
 	f, err := DBFindOne[T](where)
 	if err != nil {
 		var tmp T
@@ -159,4 +166,64 @@ func DBGetOrCreate[T any](where map[any]any, callback func(*T)) (*T, error) {
 	}
 
 	return f, nil
+}
+
+func DBFindOneByIDOrCreate[T any](id uint, callback func(*T)) (*T, error) {
+	f, err := DBFindByID[T](id)
+	if err != nil {
+		var tmp T
+		callback(&tmp)
+
+		if f, err = DBCreate(&tmp); err != nil {
+			return nil, err
+		}
+	}
+
+	return f, nil
+}
+
+func DBFindOneAndUpdate[T any](where map[any]any, callback func(*T)) (*T, error) {
+	var f T
+	if err := GetDB().First(&f, where).Error; err != nil {
+		return nil, err
+	}
+
+	callback(&f)
+
+	return &f, nil
+}
+
+func DBFindOneByIDAndUpdate[T any](id uint, callback func(*T)) (*T, error) {
+	f, err := DBFindByID[T](id)
+	if err != nil {
+		return nil, err
+	}
+
+	callback(f)
+
+	return f, nil
+}
+
+func DBFindOneAndDelete[T any](where map[any]any) (*T, error) {
+	f, err := DBFindOne[T](where)
+	if err != nil {
+		return nil, err
+	}
+
+	err = GetDB().Delete(f).Error
+	return f, err
+}
+
+func DBFindOneByIDAndDelete[T any](id uint) (*T, error) {
+	f, err := DBFindByID[T](id)
+	if err != nil {
+		return nil, err
+	}
+
+	err = GetDB().Delete(f).Error
+	return f, err
+}
+
+func DBGetOrCreate[T any](where map[any]any, callback func(*T)) (*T, error) {
+	return DBFindOneOrCreate(where, callback)
 }
