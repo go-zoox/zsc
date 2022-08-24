@@ -121,3 +121,42 @@ func DBGetMany[T any](ids []uint) (data []*T, err error) {
 		Find(&data).Error
 	return
 }
+
+func DBFind[T any](where map[any]any) (data []*T, err error) {
+	err = GetDB().Find(&data, where).Error
+	return
+}
+
+func DBFindOne[T any](where map[any]any) (*T, error) {
+	var f T
+	if err := GetDB().First(&f, where).Error; err != nil {
+		return nil, err
+	}
+
+	return &f, nil
+}
+
+func DBFindOneAndUpdate[T any](where map[any]any, callback func(*T)) (*T, error) {
+	var f T
+	if err := GetDB().First(&f, where).Error; err != nil {
+		return nil, err
+	}
+
+	callback(&f)
+
+	return &f, nil
+}
+
+func DBGetOrCreate[T any](where map[any]any, callback func(*T)) (*T, error) {
+	f, err := DBFindOne[T](where)
+	if err != nil {
+		var tmp T
+		callback(&tmp)
+
+		if f, err = DBCreate(&tmp); err != nil {
+			return nil, err
+		}
+	}
+
+	return f, nil
+}
