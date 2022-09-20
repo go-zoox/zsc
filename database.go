@@ -2,28 +2,32 @@ package zsc
 
 import (
 	"fmt"
-	"strings"
 )
 
 func DBList[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T, total int64, err error) {
 	offset := int((page - 1) * pageSize)
 	limit := int(pageSize)
 
-	whereClauses := []string{}
-	whereValues := []interface{}{}
-	for _, w := range *where {
-		if w.IsFuzzy {
-			whereClauses = append(whereClauses, fmt.Sprintf("%s Like ?", w.Key))
-			whereValues = append(whereValues, fmt.Sprintf("%%%s%%", w.Value))
-		} else if w.isNot {
-			whereClauses = append(whereClauses, fmt.Sprintf("%s != ?", w.Key))
-			whereValues = append(whereValues, w.Value)
-		} else {
-			whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", w.Key))
-			whereValues = append(whereValues, w.Value)
-		}
-	}
-	whereClause := strings.Join(whereClauses, " AND ")
+	// whereClauses := []string{}
+	// whereValues := []interface{}{}
+	// for _, w := range *where {
+	// 	if w.IsFuzzy {
+	// 		whereClauses = append(whereClauses, fmt.Sprintf("%s ILike ?", w.Key))
+	// 		whereValues = append(whereValues, fmt.Sprintf("%%%s%%", w.Value))
+	// 	} else if w.isNot {
+	// 		whereClauses = append(whereClauses, fmt.Sprintf("%s != ?", w.Key))
+	// 		whereValues = append(whereValues, w.Value)
+	// 	} else if w.isIn {
+	// 		whereClauses = append(whereClauses, fmt.Sprintf("%s in (?)", w.Key))
+	// 		whereValues = append(whereValues, w.Value)
+	// 	} else {
+	// 		whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", w.Key))
+	// 		whereValues = append(whereValues, w.Value)
+	// 	}
+	// }
+	// whereClause := strings.Join(whereClauses, " AND ")
+
+	whereClause, whereValues := where.Build()
 
 	countTx := GetDB().Model(new(T))
 	dataTx := GetDB()

@@ -1,6 +1,9 @@
 package zsc
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 type Page struct {
 	Page     int64 `query:"page,default=1"`
@@ -12,6 +15,7 @@ type WhereOne struct {
 	Value   interface{}
 	IsFuzzy bool
 	isNot   bool
+	isIn    bool
 }
 
 type OrderByOne struct {
@@ -24,14 +28,17 @@ type Where []WhereOne
 type SetWhereOptions struct {
 	IsFuzzy bool
 	IsNot   bool
+	IsIn    bool
 }
 
 func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 	var isFuzzy bool
 	var isNot bool
-	if len(opts) > 0 {
+	var isIn bool
+	if len(opts) > 0 && opts[0] != nil {
 		isFuzzy = opts[0].IsFuzzy
 		isNot = opts[0].IsNot
+		isIn = opts[0].IsIn
 	}
 
 	*w = append(*w, WhereOne{
@@ -39,6 +46,7 @@ func (w *Where) Set(key string, value interface{}, opts ...*SetWhereOptions) {
 		Value:   value,
 		IsFuzzy: isFuzzy,
 		isNot:   isNot,
+		isIn:    isIn,
 	})
 }
 
@@ -50,6 +58,33 @@ func (w *Where) Get(key string) (interface{}, bool) {
 	}
 
 	return "", false
+}
+
+func (w *Where) Length() int {
+	return len(*w)
+}
+
+func (w *Where) Build() (string, []interface{}) {
+	whereClauses := []string{}
+	whereValues := []interface{}{}
+	for _, w := range *w {
+		if w.IsFuzzy {
+			whereClauses = append(whereClauses, fmt.Sprintf("%s ILike ?", w.Key))
+			whereValues = append(whereValues, fmt.Sprintf("%%%s%%", w.Value))
+		} else if w.isNot {
+			whereClauses = append(whereClauses, fmt.Sprintf("%s != ?", w.Key))
+			whereValues = append(whereValues, w.Value)
+		} else if w.isIn {
+			whereClauses = append(whereClauses, fmt.Sprintf("%s in (?)", w.Key))
+			whereValues = append(whereValues, w.Value)
+		} else {
+			whereClauses = append(whereClauses, fmt.Sprintf("%s = ?", w.Key))
+			whereValues = append(whereValues, w.Value)
+		}
+	}
+	whereClause := strings.Join(whereClauses, " AND ")
+
+	return whereClause, whereValues
 }
 
 func (w *Where) Debug() {
