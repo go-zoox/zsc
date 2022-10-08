@@ -14,7 +14,7 @@ type Params struct {
 	page *Page
 }
 
-// 
+//
 func NewParams(ctx *zoox.Context) *Params {
 	return &Params{
 		ctx: ctx,
@@ -153,18 +153,32 @@ type ListParams struct {
 	OrderBy  *OrderBy
 }
 
-func (c *Params) GetList() (*ListParams, error) {
+type ListParamsDefault struct {
+	Page     uint
+	PageSize uint
+}
+
+func (c *Params) GetList(defaults ...*ListParamsDefault) (*ListParams, error) {
+	var defaultsX *ListParamsDefault
+	if len(defaults) > 0 && defaults[0] != nil {
+		defaultsX = defaults[0]
+	}
+
 	var listParams ListParams
 	var err error
 
 	listParams.Page, err = c.Page()
 	if err != nil {
 		return nil, fmt.Errorf("parse page error: %s", err)
+	} else if defaultsX != nil && listParams.Page == 0 && defaultsX.Page != 0 {
+		listParams.Page = defaultsX.Page
 	}
 
 	listParams.PageSize, err = c.PageSize()
 	if err != nil {
 		return nil, fmt.Errorf("parse page size error: %s", err)
+	} else if defaultsX != nil && listParams.PageSize == 0 && defaultsX.PageSize != 0 {
+		listParams.PageSize = defaultsX.PageSize
 	}
 
 	listParams.Where = c.Where()

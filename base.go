@@ -131,3 +131,21 @@ func (w *OrderBy) Debug() {
 		fmt.Printf("[order_by] %s %s\n", v.Key, desc)
 	}
 }
+
+func (w *OrderBy) Length() int {
+	return len(*w)
+}
+
+func (w *OrderBy) Build() string {
+	orders := []string{}
+	for _, order := range *w {
+		orderMod := "ASC"
+		if order.IsDESC {
+			orderMod = "DESC"
+		}
+
+		orders = append(orders, fmt.Sprintf("%s %s", order.Key, orderMod))
+	}
+
+	return strings.Join(orders, ",")
+}
