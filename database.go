@@ -231,3 +231,31 @@ func DBFindOneByIDAndDelete[T any](id uint) (*T, error) {
 func DBGetOrCreate[T any](where map[any]any, callback func(*T)) (*T, error) {
 	return DBFindOneOrCreate(where, callback)
 }
+
+func DBListAll[T any](where *Where, orderBy *OrderBy) (data []*T, err error) {
+	whereClause, whereValues := where.Build()
+
+	dataTx := GetDB()
+
+	if orderBy != nil {
+		for _, order := range *orderBy {
+			// fmt.Println("order by:", order.Key, order.IsDESC)
+			orderMod := "ASC"
+			if order.IsDESC {
+				orderMod = "DESC"
+			}
+
+			orderStr := fmt.Sprintf("%s %s", order.Key, orderMod)
+			dataTx = dataTx.Order(orderStr)
+		}
+	}
+	if whereClause != "" {
+		dataTx = dataTx.Where(whereClause, whereValues...)
+	}
+
+	err = dataTx.
+		Find(&data).
+		Error
+
+	return
+}
