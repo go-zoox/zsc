@@ -1,7 +1,10 @@
 package zsc
 
 import (
+	"errors"
 	"fmt"
+
+	"gorm.io/gorm"
 )
 
 func DBList[T any](page, pageSize uint, where *Where, orderBy *OrderBy) (data []*T, total int64, err error) {
@@ -143,6 +146,10 @@ func DBFindOne[T any](where map[any]any) (*T, error) {
 func DBExists[T any](where map[any]any) (bool, error) {
 	_, err := DBFindOne[T](where)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+
 		return false, err
 	}
 
