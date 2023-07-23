@@ -2,7 +2,6 @@ package zsc
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/go-zoox/zoox"
@@ -14,7 +13,6 @@ type Params struct {
 	page *Page
 }
 
-//
 func NewParams(ctx *zoox.Context) *Params {
 	return &Params{
 		ctx: ctx,
@@ -67,9 +65,9 @@ func (c *Params) PageSize() (uint, error) {
 }
 
 func (c *Params) ID() (uint, error) {
-	id, err := strconv.Atoi(c.ctx.Param().Get("id"))
-	if err != nil {
-		return 0, err
+	id := c.ctx.Param().Get("id").Int64()
+	if id == 0 {
+		return 0, fmt.Errorf("invalid id: %s", c.ctx.Param().Get("id").String())
 	}
 
 	return uint(id), nil
@@ -112,9 +110,9 @@ func (c *Params) Where() *Where {
 func (c *Params) OrderBy() *OrderBy {
 	var orderBy OrderBy
 
-	orderByRaw := c.ctx.Query().Get("orderBy")
+	orderByRaw := c.ctx.Query().Get("orderBy").String()
 	if orderByRaw == "" {
-		orderByRaw = c.ctx.Query().Get("order-by")
+		orderByRaw = c.ctx.Query().Get("order-by").String()
 	}
 
 	if orderByRaw != "" {
